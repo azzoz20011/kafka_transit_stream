@@ -21,17 +21,31 @@ KSQL_URL = "http://localhost:8088"
 #       Make sure to cast the COUNT of station id to `count`
 #       Make sure to set the value format to JSON
 
-KSQL_STATEMENT = """
-CREATE TABLE turnstile (
-    ???
+KSQL_STATEMENTS = [
+    """
+CREATE STREAM IF NOT EXISTS turnstile (
+    station_id INTEGER,
+    station_name STRING,
+    line STRING
 ) WITH (
-    ???
+    KAFKA_TOPIC='cta.turnstile',
+    KEY_FORMAT='KAFKA',
+    VALUE_FORMAT='AVRO'
 );
-
-CREATE TABLE turnstile_summary
-WITH (???) AS
-    ???
-"""
+""",
+    """
+CREATE TABLE IF NOT EXISTS turnstile_summary
+WITH (
+    KAFKA_TOPIC='TURNSTILE_SUMMARY',
+    VALUE_FORMAT='JSON'
+) AS
+SELECT
+    station_id,
+    CAST(COUNT(station_id) AS INTEGER) AS count
+FROM turnstile
+GROUP BY station_id;
+""",
+]
 
 
 def execute_statement():
@@ -41,19 +55,22 @@ def execute_statement():
 
     logging.debug("executing ksql statement...")
 
-    resp = requests.post(
-        f"{KSQL_URL}/ksql",
-        headers={"Content-Type": "application/vnd.ksql.v1+json"},
-        data=json.dumps(
-            {
-                "ksql": KSQL_STATEMENT,
-                "streamsProperties": {"ksql.streams.auto.offset.reset": "earliest"},
-            }
-        ),
-    )
+    for statement in KSQL_STATEMENTS:
+        resp = requests.post(
+            f"{KSQL_URL}/ksql",
+            headers={"Content-Type": "application/vnd.ksql.v1+json"},
+            data=json.dumps(
+                {
+                    "ksql": statement,
+                    "streamsProperties": {"ksql.streams.auto.offset.reset": "earliest"},
+                }
+            ),
+        )
 
-    # Ensure that a 2XX status code was returned
-    resp.raise_for_status()
+        # Ensure that a 2XX status code was returned
+        if resp.status_code >= 400:
+            print(resp.text)
+        resp.raise_for_status()
 
 
 if __name__ == "__main__":

@@ -42,7 +42,7 @@ class Station(Producer):
             topic_name,
             key_schema=Station.key_schema,
             value_schema=Station.value_schema,
-            num_partitions=3,
+            num_partitions=1,
             num_replicas=1,
         )
 
@@ -69,8 +69,8 @@ class Station(Producer):
                 "station_id": self.station_id,  
                 "train_id": str(train.train_id),
                 "direction": direction,
-                "line": self.color,
-                "train_status": train.status,
+                "line": self.color.name if hasattr(self.color, "name") else str(self.color),
+                "train_status": train.status.name if hasattr(train.status, "name") else str(train.status),
                 "prev_station_id": int(prev_station_id) if prev_station_id is not None else -1,
                 "prev_direction": prev_direction if prev_direction is not None else "",
            },

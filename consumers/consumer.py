@@ -40,15 +40,17 @@ class KafkaConsumer:
                 #
                 # TODO
                 #
+                "bootstrap.servers": "PLAINTEXT://localhost:9092",
+                "group.id": "cta-consumer-group",
+                "auto.offset.reset": "earliest" if offset_earliest else "latest",
         }
 
         # TODO: Create the Consumer, using the appropriate type.
         if is_avro is True:
             self.broker_properties["schema.registry.url"] = "http://localhost:8081"
-            #self.consumer = AvroConsumer(...)
+            self.consumer = AvroConsumer(self.broker_properties)
         else:
-            #self.consumer = Consumer(...)
-            pass
+            self.consumer = Consumer(self.broker_properties)
 
         #
         #
@@ -56,21 +58,17 @@ class KafkaConsumer:
         # how the `on_assign` callback should be invoked.
         #
         #
-        # self.consumer.subscribe( TODO )
+        self.consumer.subscribe( [self.topic_name_pattern]  )
 
     def on_assign(self, consumer, partitions):
         """Callback for when topic assignment takes place"""
         # TODO: If the topic is configured to use `offset_earliest` set the partition offset to
         # the beginning or earliest
-        logger.info("on_assign is incomplete - skipping")
         for partition in partitions:
-            pass
-            #
-            #
-            # TODO
-            #
-            #
-
+            if self.offset_earliest:
+                partition.offset = confluent_kafka.OFFSET_BEGINNING
+            else:
+                partition.offset = confluent_kafka.OFFSET_END
         logger.info("partitions assigned for %s", self.topic_name_pattern)
         consumer.assign(partitions)
 
@@ -91,14 +89,18 @@ class KafkaConsumer:
         # is retrieved.
         #
         #
-        logger.info("_consume is incomplete - skipping")
-        return 0
+        massage = self.consumer.poll(self.consume_timeout)
+        if massage is None:
+            return 0
+        elif massage.error():
+            logger.error("error from consumer %s", massage.error())
+            return 0
+        else:
+            self.message_handler(massage)
+            return 1
 
 
     def close(self):
         """Cleans up any open kafka consumers"""
-        #
-        #
-        # TODO: Cleanup the kafka consumer
-        #
-        #
+        self.consumer.close()
+        logger.info("closed consumer for %s", self.topic_name_pattern)
