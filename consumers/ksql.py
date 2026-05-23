@@ -41,6 +41,7 @@ WITH (
 ) AS
 SELECT
     station_id,
+    AS_VALUE(station_id) AS station_id_value,
     CAST(COUNT(station_id) AS INTEGER) AS count
 FROM turnstile
 GROUP BY station_id;

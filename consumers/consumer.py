@@ -36,12 +36,13 @@ class KafkaConsumer:
         # and use the Host URL for Kafka and Schema Registry!
         #
         #
+        group_id = "cta-consumer-group-" + self.topic_name_pattern.replace(".", "-")
         self.broker_properties = {
                 #
                 # TODO
                 #
                 "bootstrap.servers": "PLAINTEXT://localhost:9092",
-                "group.id": "cta-consumer-group",
+                "group.id": group_id,
                 "auto.offset.reset": "earliest" if offset_earliest else "latest",
         }
 
