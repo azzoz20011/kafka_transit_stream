@@ -1,4 +1,5 @@
 """Contains functionality related to Weather"""
+import json
 import logging
 
 
@@ -31,4 +32,3 @@ class Weather:
 
         self.temperature = json_data.get("temperature", self.temperature)
         self.status = json_data.get("status", self.status)
-
