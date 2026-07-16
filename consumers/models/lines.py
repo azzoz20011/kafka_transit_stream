@@ -19,10 +19,15 @@ class Lines:
 
     def process_message(self, message):
         """Processes a station message"""
-        if message.topic() in ("cta.output_stations", "cta.arrival"):
+        topic = message.topic()
+
+        if topic == "cta.output_stations" or topic.startswith("cta.arrival."):
             value = message.value()
-            if message.topic() == "cta.output_stations":
+
+            # output_stations is non-Avro JSON
+            if topic == "cta.output_stations":
                 value = json.loads(value)
+
             if value["line"] == "green":
                 self.green_line.process_message(message)
             elif value["line"] == "red":
@@ -31,9 +36,14 @@ class Lines:
                 self.blue_line.process_message(message)
             else:
                 logger.debug("discarding unknown line msg %s", value["line"])
-        elif "TURNSTILE_SUMMARY" == message.topic():
+
+        elif topic == "TURNSTILE_SUMMARY":
             self.green_line.process_message(message)
             self.red_line.process_message(message)
             self.blue_line.process_message(message)
+
         else:
-            logger.info("ignoring non-lines message %s", message.topic())
+            logger.info("ignoring non-lines message %s", topic)
+
+
+

@@ -23,8 +23,8 @@ KSQL_URL = "http://localhost:8088"
 
 KSQL_STATEMENTS = [
     """
-CREATE STREAM IF NOT EXISTS turnstile (
-    station_id INTEGER,
+CREATE TABLE IF NOT EXISTS turnstile (
+    station_id INTEGER PRIMARY KEY,
     station_name STRING,
     line STRING
 ) WITH (

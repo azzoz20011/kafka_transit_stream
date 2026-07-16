@@ -27,7 +27,8 @@ class Line:
         """Adds the station to this Line's data model"""
         if value["line"] != self.color:
             return
-        self.stations[value["station_id"]] = Station.from_message(value)
+        station_id = int(value["station_id"])
+        self.stations[station_id] = Station.from_message(value)
 
     def _handle_arrival(self, message):
         """Updates train locations"""
@@ -65,7 +66,7 @@ class Line:
                 self._handle_station(value)
             except Exception as e:
                 logger.fatal("bad station? %s, %s", value, e)
-        elif topic == "cta.arrival":
+        elif topic.startswith("cta.arrival."):
             self._handle_arrival(message)
         elif topic == "TURNSTILE_SUMMARY":
             json_data = json.loads(message.value())
